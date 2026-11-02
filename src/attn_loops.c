@@ -1,9 +1,15 @@
 /*
- * attn_loops.c -- Q3a: loop reordering so the compiler can vectorise.
+ * attn_naive.c -- naive single-head attention (given).
  *
- * Placeholder: replace the body of attention() with your implementation.
- * Keep the driver (main) below unchanged. See attn_naive.c for the input and
- * output format.
+ *     O = softmax(Q K^T / sqrt(d)) V        Q, K, V, O: N x d, row-major floats
+ *
+ * Each variant has its own file in src/ with this same driver; write your
+ * code in its attention() function and keep the driver (main) unchanged.
+ *
+ * Usage:  attn_naive <input.bin> <output.bin>
+ *   input.bin : int32 N, int32 d, then Q, K, V (N*d float32 each)
+ *   output.bin: int32 N, int32 d, then O (N*d float32)
+ * Prints the median time of 5 runs (after 1 warm-up run).
  */
 #define _POSIX_C_SOURCE 200809L
 #include <math.h>
@@ -17,13 +23,51 @@
 #endif
 
 /* ------------------------------------------------------------------------- */
-/* attention(): write your implementation here.                               */
+/* attention(): change this function in your variants.                        */
 /* ------------------------------------------------------------------------- */
 void attention(const float *Q, const float *K, const float *V, float *O, int N, int d)
 {
-    (void)Q; (void)K; (void)V; (void)O; (void)N; (void)d;
-    printf("attn_loops: not implemented yet\n");
-    exit(0); /* no output file is written, so `make check` skips this variant */
+    const float scale = 1.0f / sqrtf((float)d);
+    float *S = malloc((size_t)N * N * sizeof(float));
+
+    /* 1. S = Q K^T * scale */
+    for (int i = 0; i < N; i++)
+        for (int j = 0; j < N; j++) {
+            float acc = 0.0f;
+            for (int k = 0; k < d; k++)
+                acc += Q[(size_t)i * d + k] * K[(size_t)j * d + k];
+            S[(size_t)i * N + j] = acc * scale;
+        }
+
+    /* 2. softmax of each row of S */
+    for (int i = 0; i < N; i++) {
+        float *row = S + (size_t)i * N;
+        float max = row[0];
+        for (int j = 1; j < N; j++)
+            if (row[j] > max)
+                max = row[j];
+        float sum = 0.0f;
+        for (int j = 0; j < N; j++) {
+            row[j] = expf(row[j] - max);
+            sum += row[j];
+        }
+        for (int j = 0; j < N; j++)
+            row[j] = row[j] / sum;
+    }
+
+    /* 3. O = S V */
+for (int i = 0; i < N; i++)
+    for (int k = 0; k < d; k++)
+        O[(size_t)i * d + k] = 0.0f;
+
+for (int i = 0; i < N; i++)
+    for (int j = 0; j < N; j++) {
+        float s = S[(size_t)i * N + j];
+        for (int k = 0; k < d; k++)
+            O[(size_t)i * d + k] += s * V[(size_t)j * d + k];
+    }
+
+    free(S);
 }
 
 /* ------------------------------------------------------------------------- */

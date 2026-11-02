@@ -1,30 +1,30 @@
 # Machine specification (Q1). Fill in every field; give units. Fill in N/A if not applicable.
 
-CPU model                       :
-Microarchitecture               :
-Physical cores                  :
-Logical cores (hardware threads):
-Performance / efficiency cores  :
-Base clock (GHz)                :
-Max single-core clock (GHz)     :
-All-core clock under load (GHz) :
-SIMD instruction set and width  :
-FMA units per core              :
-Vector registers per core       :
-L1 data cache (per core)        :
-L2 cache (size, shared by)      :
-L3 cache (size, shared by)      :
-Cache line size (bytes)         :
-RAM size (GB)                   :
-RAM type, speed (MT/s), channels:
-Operating system                :
-Compiler and version            :
+CPU model                       :11th Gen Intel Core i5-11300HCPU
+Microarchitecture               :Willow Cove (Tiger Lake-H)
+Physical cores                  :4
+Logical cores (hardware threads):8
+Performance / efficiency cores  :4 perfomance,0 efficiency
+Base clock (GHz)                :3.10
+Max single-core clock (GHz)     :4.40
+All-core clock under load (GHz) :3.10
+SIMD instruction set and width  :AVX-512, 512-bit (16 FP32 lanes); also AVX2, 256-bit (8 FP32 lanes)
+FMA units per core              :2 x 256-bit FMA. One 512-bit FMA uses both units, so the peak is the same either way: 32 FP32 FLOP/cycle
+Vector registers per core       :32 zmm
+L1 data cache (per core)        :48 KiB
+L2 cache (size, shared by)      :1.25 MiB per core, private
+L3 cache (size, shared by)      :8 MiB, shared by all 4 cores
+Cache line size (bytes)         :64
+RAM size (GB)                   :16
+RAM type, speed (MT/s), channels:DDR4-3200, 2 channels(2 x 8 GB)
+Operating system                :Ubuntu on WSL2, Windows host
+Compiler and version            :Ubuntu clang 18.1.3
 
 # Derived (show the calculation in report.pdf)
-Peak FP32 GFLOP/s, one core     :
-Peak FP32 GFLOP/s, all cores    :
-Memory bandwidth (GB/s)         :
-Ridge point, one core (FLOP/B)  :
-Ridge point, all cores (FLOP/B) :
+Peak FP32 GFLOP/s, one core     :140.8
+Peak FP32 GFLOP/s, all cores    :396
+Memory bandwidth (GB/s)         :51.2
+Ridge point, one core (FLOP/B)  :2.75
+Ridge point, all cores (FLOP/B) :7.75
 
 

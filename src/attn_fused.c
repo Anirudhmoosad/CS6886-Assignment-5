@@ -1,9 +1,15 @@
 /*
- * attn_fused.c -- Q3c: row-wise fusion (the N x N matrix is never stored).
+ * attn_naive.c -- naive single-head attention (given).
  *
- * Placeholder: replace the body of attention() with your implementation.
- * Keep the driver (main) below unchanged. See attn_naive.c for the input and
- * output format.
+ *     O = softmax(Q K^T / sqrt(d)) V        Q, K, V, O: N x d, row-major floats
+ *
+ * Each variant has its own file in src/ with this same driver; write your
+ * code in its attention() function and keep the driver (main) unchanged.
+ *
+ * Usage:  attn_naive <input.bin> <output.bin>
+ *   input.bin : int32 N, int32 d, then Q, K, V (N*d float32 each)
+ *   output.bin: int32 N, int32 d, then O (N*d float32)
+ * Prints the median time of 5 runs (after 1 warm-up run).
  */
 #define _POSIX_C_SOURCE 200809L
 #include <math.h>
@@ -17,13 +23,41 @@
 #endif
 
 /* ------------------------------------------------------------------------- */
-/* attention(): write your implementation here.                               */
+/* attention(): change this function in your variants.                        */
 /* ------------------------------------------------------------------------- */
 void attention(const float *Q, const float *K, const float *V, float *O, int N, int d)
 {
-    (void)Q; (void)K; (void)V; (void)O; (void)N; (void)d;
-    printf("attn_fused: not implemented yet\n");
-    exit(0); /* no output file is written, so `make check` skips this variant */
+    const float scale = 1.0f / sqrtf((float)d);
+    float *acc = malloc((size_t)d * sizeof(float));
+
+    for (int i = 0; i < N; i++) {
+        float m = -INFINITY;
+        float l = 0.f;
+        for (int k = 0; k < d; k++)
+            acc[k] = 0.f;
+
+        const float *q = Q + (size_t)i * d;
+        for (int j = 0; j < N; j++) {
+            const float *kj = K + (size_t)j * d;
+            const float *vj = V + (size_t)j * d;
+            float s = 0.f;
+            for (int k = 0; k < d; k++)
+                s += q[k] * kj[k];
+            s *= scale;
+
+            float m_new = s > m ? s : m;
+            float alpha = expf(m - m_new);
+            float p = expf(s - m_new);
+            l = l * alpha + p;
+            for (int k = 0; k < d; k++)
+                acc[k] = acc[k] * alpha + p * vj[k];
+            m = m_new;
+        }
+        float inv = 1.f / l;
+        for (int k = 0; k < d; k++)
+            O[(size_t)i * d + k] = acc[k] * inv;
+    }
+    free(acc);
 }
 
 /* ------------------------------------------------------------------------- */
